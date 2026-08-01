@@ -40,7 +40,13 @@ const PROVIDER_MODELS: Record<string, Model[]> = {
 export const PROVIDERS: Provider[] = PROVIDER_DEFS.map((provider) => ({
   displayName: provider.displayName,
   providerId: provider.id,
-  models: PROVIDER_MODELS[provider.id] ?? [],
+  models:
+    PROVIDER_MODELS[provider.id] ??
+    provider.models?.map((model) => ({
+      id: model.id,
+      displayName: model.displayName,
+    })) ??
+    [],
 }));
 
 export function getModelsForProvider(providerId: string): Model[] {
@@ -58,7 +64,7 @@ export function getDefaultModelForProvider(providerId: string): string | undefin
 }
 
 export function getModelDisplayName(modelId: string): string {
-  const normalizedId = modelId.replace(/^(ollama|ollama-cloud|openrouter):/, '');
+  const normalizedId = modelId.replace(/^(ollama|ollama-cloud|openrouter|minimax):/, '');
 
   for (const provider of PROVIDERS) {
     const model = provider.models.find((entry) => entry.id === normalizedId || entry.id === modelId);

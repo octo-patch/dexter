@@ -64,6 +64,16 @@ function getApiKey(envVar: string): string {
   return apiKey;
 }
 
+function getMiniMaxOpenAIBaseUrl(): string {
+  const provider = getProviderById('minimax');
+  return (
+    process.env.MINIMAX_BASE_URL ??
+    provider?.openAIBaseUrl ??
+    provider?.regionalEndpoints?.find((endpoint) => endpoint.region === 'global_en')?.openAIBaseUrl ??
+    'https://api.minimax.io/v1'
+  );
+}
+
 // Factories keyed by provider id — prefix routing is handled by resolveProvider()
 const MODEL_FACTORIES: Record<string, ModelFactory> = {
   anthropic: (name, opts) =>
@@ -126,6 +136,15 @@ const MODEL_FACTORIES: Record<string, ModelFactory> = {
       }),
     });
   },
+  minimax: (name, opts) =>
+    new ChatOpenAI({
+      model: name.replace(/^minimax:/, ''),
+      ...opts,
+      apiKey: getApiKey('MINIMAX_API_KEY'),
+      configuration: {
+        baseURL: getMiniMaxOpenAIBaseUrl(),
+      },
+    }),
   ollama: (name, opts) =>
     new ChatOllama({
       model: name.replace(/^ollama:/, ''),

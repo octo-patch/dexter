@@ -55,6 +55,7 @@ interface ModelOpts {
 }
 
 type ModelFactory = (name: string, opts: ModelOpts) => BaseChatModel;
+type MiniMaxApiFormat = 'openai' | 'anthropic';
 
 function getApiKey(envVar: string): string {
   const apiKey = process.env[envVar];
@@ -64,12 +65,33 @@ function getApiKey(envVar: string): string {
   return apiKey;
 }
 
-function getMiniMaxOpenAIBaseUrl(): string {
+function getMiniMaxApiFormat(): MiniMaxApiFormat {
+  const format = process.env.MINIMAX_API_FORMAT ?? 'openai';
+  if (format !== 'openai' && format !== 'anthropic') {
+    throw new Error('[LLM] MINIMAX_API_FORMAT must be either openai or anthropic');
+  }
+  return format;
+}
+
+function getMiniMaxBaseUrl(format: MiniMaxApiFormat): string {
   const provider = getProviderById('minimax');
+  const globalEndpoint = provider?.regionalEndpoints?.find(
+    (endpoint) => endpoint.region === 'global_en'
+  );
+
+  if (format === 'anthropic') {
+    return (
+      process.env.MINIMAX_BASE_URL ??
+      provider?.anthropicBaseUrl ??
+      globalEndpoint?.anthropicBaseUrl ??
+      'https://api.minimax.io/anthropic'
+    );
+  }
+
   return (
     process.env.MINIMAX_BASE_URL ??
     provider?.openAIBaseUrl ??
-    provider?.regionalEndpoints?.find((endpoint) => endpoint.region === 'global_en')?.openAIBaseUrl ??
+    globalEndpoint?.openAIBaseUrl ??
     'https://api.minimax.io/v1'
   );
 }
@@ -136,15 +158,30 @@ const MODEL_FACTORIES: Record<string, ModelFactory> = {
       }),
     });
   },
-  minimax: (name, opts) =>
-    new ChatOpenAI({
-      model: name.replace(/^minimax:/, ''),
+  minimax: (name, opts) => {
+    const model = name.replace(/^minimax:/, '');
+    const apiKey = getApiKey('MINIMAX_API_KEY');
+    const format = getMiniMaxApiFormat();
+    const baseUrl = getMiniMaxBaseUrl(format);
+
+    if (format === 'anthropic') {
+      return new ChatAnthropic({
+        model,
+        ...opts,
+        apiKey,
+        anthropicApiUrl: baseUrl,
+      });
+    }
+
+    return new ChatOpenAI({
+      model,
       ...opts,
-      apiKey: getApiKey('MINIMAX_API_KEY'),
+      apiKey,
       configuration: {
-        baseURL: getMiniMaxOpenAIBaseUrl(),
+        baseURL: baseUrl,
       },
-    }),
+    });
+  },
   ollama: (name, opts) =>
     new ChatOllama({
       model: name.replace(/^ollama:/, ''),

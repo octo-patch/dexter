@@ -22,26 +22,62 @@ describe('OpenAI API routing', () => {
 });
 
 describe('MiniMax API routing', () => {
-  test('uses the configured OpenAI-compatible endpoint', () => {
+  test('supports configured OpenAI-compatible and Anthropic-compatible endpoints', () => {
     const previousApiKey = process.env.MINIMAX_API_KEY;
+    const previousApiFormat = process.env.MINIMAX_API_FORMAT;
     const previousBaseUrl = process.env.MINIMAX_BASE_URL;
     process.env.MINIMAX_API_KEY = 'test-key';
-    process.env.MINIMAX_BASE_URL = 'https://api.minimaxi.com/v1';
+    delete process.env.MINIMAX_API_FORMAT;
+    delete process.env.MINIMAX_BASE_URL;
 
     try {
-      const llm = getChatModel('minimax:MiniMax-M3') as {
+      const globalOpenAiLlm = getChatModel('minimax:MiniMax-M3') as {
         clientConfig?: { baseURL?: string };
         model?: string;
         modelName?: string;
       };
 
-      expect(llm.clientConfig?.baseURL).toBe('https://api.minimaxi.com/v1');
-      expect(llm.model ?? llm.modelName).toBe('MiniMax-M3');
+      expect(globalOpenAiLlm.clientConfig?.baseURL).toBe('https://api.minimax.io/v1');
+      expect(globalOpenAiLlm.model ?? globalOpenAiLlm.modelName).toBe('MiniMax-M3');
+
+      process.env.MINIMAX_BASE_URL = 'https://api.minimaxi.com/v1';
+
+      const cnOpenAiLlm = getChatModel('minimax:MiniMax-M2.7') as {
+        clientConfig?: { baseURL?: string };
+      };
+
+      expect(cnOpenAiLlm.clientConfig?.baseURL).toBe('https://api.minimaxi.com/v1');
+
+      process.env.MINIMAX_API_FORMAT = 'anthropic';
+      delete process.env.MINIMAX_BASE_URL;
+
+      const globalAnthropicLlm = getChatModel('minimax:MiniMax-M3') as {
+        apiUrl?: string;
+      };
+
+      expect(globalAnthropicLlm.apiUrl).toBe('https://api.minimax.io/anthropic');
+
+      process.env.MINIMAX_BASE_URL = 'https://api.minimaxi.com/anthropic';
+
+      const cnAnthropicLlm = getChatModel('minimax:MiniMax-M2.7') as {
+        apiUrl?: string;
+        model?: string;
+        modelName?: string;
+      };
+
+      expect(cnAnthropicLlm.apiUrl).toBe('https://api.minimaxi.com/anthropic');
+      expect(cnAnthropicLlm.model ?? cnAnthropicLlm.modelName).toBe('MiniMax-M2.7');
     } finally {
       if (previousApiKey === undefined) {
         delete process.env.MINIMAX_API_KEY;
       } else {
         process.env.MINIMAX_API_KEY = previousApiKey;
+      }
+
+      if (previousApiFormat === undefined) {
+        delete process.env.MINIMAX_API_FORMAT;
+      } else {
+        process.env.MINIMAX_API_FORMAT = previousApiFormat;
       }
 
       if (previousBaseUrl === undefined) {

@@ -149,8 +149,12 @@ describe('MiniMax HTTP requests', () => {
             expect(requestUrl).toBe(`${baseUrl}/${format === 'openai' ? 'chat/completions' : 'v1/messages'}`);
             expect(requestBody.model).toBe(model.replace(/^minimax:/, ''));
             // Flash requires adaptive thinking; retain other models' existing SDK defaults.
-            if (format === 'anthropic') {
-              expect(requestBody.thinking).toEqual({ type: model === defaultModel ? 'adaptive' : 'disabled' });
+            if (format === 'anthropic' && model === defaultModel) {
+              expect(requestBody.thinking).toEqual({ type: 'adaptive' });
+            } else if (format === 'anthropic') {
+              // Newer SDKs omit this default instead of serializing disabled.
+              const sdkDefaults: unknown[] = [undefined, { type: 'disabled' }];
+              expect(sdkDefaults).toContainEqual(requestBody.thinking);
             } else {
               expect(requestBody.thinking).toBeUndefined();
             }

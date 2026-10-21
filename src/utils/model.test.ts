@@ -45,20 +45,21 @@ describe('Anthropic model catalog', () => {
 });
 
 describe('MiniMax model catalog', () => {
-  test('offers MiniMax M3 and M2.7 with M3 as the default', () => {
+  test('offers MiniMax M3.1 Flash and M3 with Flash as the default', () => {
     expect(getModelIdsForProvider('minimax')).toEqual([
+      'minimax:MiniMax-M3.1-Flash',
       'minimax:MiniMax-M3',
-      'minimax:MiniMax-M2.7',
     ]);
-    expect(getDefaultModelForProvider('minimax')).toBe('minimax:MiniMax-M3');
+    expect(getDefaultModelForProvider('minimax')).toBe('minimax:MiniMax-M3.1-Flash');
   });
 
-  test('uses MiniMax M2.7 for lightweight calls', () => {
-    expect(getProviderById('minimax')?.fastModel).toBe('minimax:MiniMax-M2.7');
+  test('uses MiniMax M3.1 Flash for lightweight calls', () => {
+    expect(getProviderById('minimax')?.fastModel).toBe('minimax:MiniMax-M3.1-Flash');
   });
 
-  test('shows the MiniMax model names in the UI', () => {
+  test('shows the MiniMax model names in the UI and preserves legacy IDs', () => {
+    expect(getModelDisplayName('minimax:MiniMax-M3.1-Flash')).toBe('MiniMax M3.1 Flash');
     expect(getModelDisplayName('minimax:MiniMax-M3')).toBe('MiniMax M3');
-    expect(getModelDisplayName('minimax:MiniMax-M2.7')).toBe('MiniMax M2.7');
+    expect(getModelDisplayName('minimax:MiniMax-M2.7')).toBe('MiniMax-M2.7');
   });
 });

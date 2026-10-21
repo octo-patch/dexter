@@ -28,6 +28,7 @@ describe('MiniMax provider registration', () => {
   });
 
   test('routes MiniMax-prefixed models to the MiniMax provider', () => {
+    expect(resolveProvider('minimax:MiniMax-M3.1-Flash').id).toBe('minimax');
     expect(resolveProvider('minimax:MiniMax-M3').id).toBe('minimax');
     expect(resolveProvider('minimax:MiniMax-M2.7').id).toBe('minimax');
   });
@@ -36,30 +37,32 @@ describe('MiniMax provider registration', () => {
     const models = getProviderById('minimax')?.models ?? [];
 
     expect(models.map((model) => model.id)).toEqual([
+      'minimax:MiniMax-M3.1-Flash',
       'minimax:MiniMax-M3',
-      'minimax:MiniMax-M2.7',
     ]);
     expect(models[0]).toMatchObject({
+      displayName: 'MiniMax M3.1 Flash',
       contextWindow: 1_000_000,
       pricingUsdPerMillionTokens: {
-        input: 0.6,
-        output: 2.4,
-        cacheRead: 0.12,
+        input: 0.15,
+        output: 0.6,
+        cacheRead: 0.015,
         cacheWrite: null,
       },
       inputModalities: ['text', 'image', 'video'],
-      thinking: ['adaptive', 'disabled'],
+      thinking: ['adaptive'],
     });
     expect(models[1]).toMatchObject({
-      contextWindow: 204_800,
+      displayName: 'MiniMax M3',
+      contextWindow: 1_000_000,
       pricingUsdPerMillionTokens: {
         input: 0.3,
         output: 1.2,
         cacheRead: 0.06,
-        cacheWrite: 0.375,
+        cacheWrite: null,
       },
-      inputModalities: ['text'],
-      thinking: ['always_on'],
+      inputModalities: ['text', 'image', 'video'],
+      thinking: ['adaptive', 'disabled'],
     });
   });
 });

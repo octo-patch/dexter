@@ -170,6 +170,8 @@ const MODEL_FACTORIES: Record<string, ModelFactory> = {
         ...opts,
         apiKey,
         anthropicApiUrl: baseUrl,
+        // Flash rejects the SDK's default disabled thinking mode.
+        ...(model === 'MiniMax-M3.1-Flash' && { thinking: { type: 'adaptive' as const } }),
       });
     }
 
